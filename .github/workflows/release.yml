@@ -31,7 +31,10 @@ jobs:
         with:
           repository: SMTanimur/nexus-gate
           token: ${{ secrets.API_REPO_ACCESS }}
-          clean: false
+          path: nexus-front
+
+      - name: Copy frontend files to root
+        run: node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
@@ -81,7 +84,10 @@ jobs:
         with:
           repository: SMTanimur/nexus-gate
           token: ${{ secrets.API_REPO_ACCESS }}
-          clean: false
+          path: nexus-front
+
+      - name: Copy frontend files to root
+        run: node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
@@ -121,7 +127,10 @@ jobs:
         with:
           repository: SMTanimur/nexus-gate
           token: ${{ secrets.API_REPO_ACCESS }}
-          clean: false
+          path: nexus-front
+
+      - name: Copy frontend files to root
+        run: node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
@@ -147,6 +156,9 @@ jobs:
 
       - name: Build all
         run: npm run build:all
+
+      - name: Clean up temporary frontend folder
+        run: node -e "const fs = require('fs'); fs.rmSync('nexus-front', { recursive: true, force: true });"
 
       - name: Publish to npm
         run: npm publish --access public
