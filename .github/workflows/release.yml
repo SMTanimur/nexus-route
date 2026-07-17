@@ -26,9 +26,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout Private Frontend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/front.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          clean: false
+
+      - name: Checkout Private Backend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/api.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          path: nexus-api
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.17
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+          cd nexus-api && npm install --legacy-peer-deps
+
+      - name: Build backend
+        run: cd nexus-api && npm run build
+
+      - name: Build frontend
+        run: npm run build:web
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4444
 
       - name: Build binary
         run: bun build --compile --minify --target=${{ matrix.target }} cli/index.ts --outfile bin/${{ matrix.artifact }}
@@ -44,6 +75,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Checkout Private Frontend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/front.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          clean: false
+
+      - name: Checkout Private Backend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/api.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          path: nexus-api
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -71,10 +116,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout Private Frontend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/front.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          clean: false
+
+      - name: Checkout Private Backend
+        uses: actions/checkout@v4
+        with:
+          repository: SMTanimur/api.nexus-gate
+          token: ${{ secrets.API_REPO_ACCESS }}
+          path: nexus-api
+
+      - name: Clean backend git files for NPM
+        run: |
+          rm -rf nexus-api/.git
+          rm -f nexus-api/.gitignore
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+          cd nexus-api && npm install --legacy-peer-deps
+
+      - name: Build all
+        run: npm run build:all
 
       - name: Publish to npm
         run: npm publish --access public
