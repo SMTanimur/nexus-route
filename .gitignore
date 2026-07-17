@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Local Build Outputs
+/dist/
+/.next/
+/bin/
+/nexus-api/
+
+# Environment configurations
+.env*
+
+# Logs
+*.log
+server.log

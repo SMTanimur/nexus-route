@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  # ─── Build standalone binaries ────────────────────────────────
+  build-binaries:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: bun-linux-x64
+            artifact: nexusgate-linux-x64
+          - os: macos-latest
+            target: bun-darwin-arm64
+            artifact: nexusgate-darwin-arm64
+          - os: windows-latest
+            target: bun-windows-x64
+            artifact: nexusgate-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.17
+
+      - name: Build binary
+        run: bun build --compile --minify --target=${{ matrix.target }} cli/index.ts --outfile bin/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: bin/${{ matrix.artifact }}
+
+  # ─── Build Docker image ───────────────────────────────────────
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: nexusgate:latest
+
+      - name: Save image
+        run: docker save nexusgate:latest | gzip > nexusgate-docker.tar.gz
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexusgate-docker
+          path: nexusgate-docker.tar.gz
+
+  # ─── Publish to NPM ───────────────────────────────────────────
+  publish-npm:
+    needs: [build-binaries, build-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ─── Create GitHub Release ────────────────────────────────────
+  release:
+    needs: [build-binaries, build-docker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/nexusgate-linux-x64/nexusgate-linux-x64
+            artifacts/nexusgate-darwin-arm64/nexusgate-darwin-arm64
+            artifacts/nexusgate-windows-x64.exe/nexusgate-windows-x64.exe
+            artifacts/nexusgate-docker/nexusgate-docker.tar.gz

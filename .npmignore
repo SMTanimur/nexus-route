@@ -1,0 +1,13 @@
+# NPM uses this file instead of .gitignore.
+# Do NOT ignore 'dist/', 'nexus-api/dist/', or '.next/' here.
+
+node_modules/
+.git/
+.github/
+.vscode/
+
+# Ignore source files
+src/
+cli/
+nexus-api/src/
+scripts/
