@@ -35,7 +35,7 @@ jobs:
 
       - name: Copy frontend files to root
         run: |
-          node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
+          node -e "const fs = require('fs'); const path = require('path'); fs.cpSync('nexus-front', '.', { recursive: true, force: true, filter: (src) => !['package.json', 'package-lock.json', 'bun.lockb', '.git', '.github', 'README.md'].includes(path.basename(src)) });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
 
       - name: Copy frontend files to root
         run: |
-          node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
+          node -e "const fs = require('fs'); const path = require('path'); fs.cpSync('nexus-front', '.', { recursive: true, force: true, filter: (src) => !['package.json', 'package-lock.json', 'bun.lockb', '.git', '.github', 'README.md'].includes(path.basename(src)) });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
@@ -133,7 +133,7 @@ jobs:
 
       - name: Copy frontend files to root
         run: |
-          node -e "const fs = require('fs'); fs.cpSync('nexus-front', '.', { recursive: true, force: true });"
+          node -e "const fs = require('fs'); const path = require('path'); fs.cpSync('nexus-front', '.', { recursive: true, force: true, filter: (src) => !['package.json', 'package-lock.json', 'bun.lockb', '.git', '.github', 'README.md'].includes(path.basename(src)) });"
 
       - name: Checkout Private Backend
         uses: actions/checkout@v4
