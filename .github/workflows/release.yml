@@ -7,22 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ─── Build standalone binaries ────────────────────────────────
+  # ─── Build ALL binaries on a single cheap Ubuntu runner ───────────
   build-binaries:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: bun-linux-x64
-            artifact: nexusgate-linux-x64
-          - os: macos-latest
-            target: bun-darwin-arm64
-            artifact: nexusgate-darwin-arm64
-          - os: windows-latest
-            target: bun-windows-x64
-            artifact: nexusgate-windows-x64.exe
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -65,14 +52,30 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4444
 
-      - name: Build binary
-        run: bun build --compile --minify --target=${{ matrix.target }} cli/index.ts --outfile bin/${{ matrix.artifact }}
+      - name: Cross-compile all platform binaries (Linux, macOS, Windows)
+        run: |
+          mkdir -p bin
+          bun build --compile --minify --target=bun-linux-x64 cli/index.ts --outfile bin/nexusgate-linux-x64
+          bun build --compile --minify --target=bun-darwin-arm64 cli/index.ts --outfile bin/nexusgate-darwin-arm64
+          bun build --compile --minify --target=bun-windows-x64 cli/index.ts --outfile bin/nexusgate-windows-x64.exe
 
-      - name: Upload artifact
+      - name: Upload Linux binary
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: bin/${{ matrix.artifact }}
+          name: nexusgate-linux-x64
+          path: bin/nexusgate-linux-x64
+
+      - name: Upload macOS binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexusgate-darwin-arm64
+          path: bin/nexusgate-darwin-arm64
+
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexusgate-windows-x64.exe
+          path: bin/nexusgate-windows-x64.exe
 
   # ─── Build Docker image ───────────────────────────────────────
   build-docker:
